@@ -9,3 +9,6 @@ idée :
 - Faire l'injection dans le pt_note
 - Vérifier quel est la classe ELF
 - Faire 2 versions de l'infection pour les deux classes ELF (32 - 64)
+
+
+NB : Actuellement le binaire à infecter doit être en brute dans le code asm, les essaies avec un argument en entrée n'ont pas fonctionné
