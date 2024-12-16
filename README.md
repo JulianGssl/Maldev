@@ -22,8 +22,8 @@ Le programme infecteur lui ouvrira un nouveau terminal pour y exécuter la comma
 1. [x] 1. Ouvrir le fichier ELF à injecter. 
 2. [x] 2. Sauvegarder le point d'entrée original, **e_entry**.  
 3. [x] 3. Analyser la table des en-têtes de programme pour trouver un segment **PT_NOTE**.  
-4. [ ] 4. Convertir le segment **PT_NOTE** en un segment **PT_LOAD**.  
-5. [ ] 5. Modifier les protections mémoire de ce segment pour autoriser l'exécution d'instructions.  
+4. [x] 4. Convertir le segment **PT_NOTE** en un segment **PT_LOAD**.  
+5. [x] 5. Modifier les protections mémoire de ce segment pour autoriser l'exécution d'instructions.  
 6. [ ] 6. Changer l'adresse du point d'entrée vers une zone qui n'entrera pas en conflit avec l'exécution originale du programme.  
 7. [ ] 7. Ajuster la taille sur le disque et la taille en mémoire virtuelle pour prendre en compte la taille du code injecté.  
 8. [ ] 8. Pointer le décalage de notre segment converti vers la fin du binaire original, où sera stocké le nouveau code.  
