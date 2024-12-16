@@ -1,12 +1,8 @@
 # M̵̢̨̗̤̠͔̅͑͋̎̉̀́̏̕Á̴͖̅͆̅͌́̀L̴̡̻͚͙͉͎̭͖̇̾́̀͊̇̈͝D̶̬̹͔̗̲͖̝͆̽͛E̶̤͋̋́̐̿̎̀̾̀V̸̬̥͓̓̒ : PT_NOTE to PT_LOAD Injection in ELF
 
-
 <p align="center">
   <img src="https://github.com/user-attachments/assets/fb379c8c-fadb-4d42-b796-26fdc65862e0" width="300"/>
 </p>
-
-
-
 
 ## Projet Maldev : Implémentez à partir de zéro sans compter sur du code externe un infecteur ptnote → ptload ELF
 
