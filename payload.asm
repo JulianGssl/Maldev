@@ -17,4 +17,10 @@ _start:
     mov rax, 60                 ; Numéro du syscall pour exit
     xor rdi, rdi                ; Code de retour 0
     syscall
-    
+
+    jmp short payload_end       ; jmp relatif pour pouvoir exécuter ensuite le code originel du binaire
+
+payload_end:                    ; Vide en attente de l'écriture de l'adresse de retour
+
+;nasm -f bin -o payload.bin payload.asm
+;xxd -i payload.bin > payload.hex
