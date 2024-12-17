@@ -114,6 +114,19 @@ Le problème réside dans le fait que je calcule l'adresse du point d'entrée d'
 
 ## Setup et Reproduction
 
+Compiler le payload et extraire les hexa : 
+- `nasm -f bin -o payload.bin payload.asm` 
+- `xxd -i payload.bin > payload.hex`
+>[!NOTE]
+>Le payload est déjà dans Maldev mais si vous souhaitez le changé vous avez les commandes.
+  
+Compiler et exécuté Maldev :  `nasm -f elf64 -g Maldev.asm -o Maldev.o && ld Maldev.o -o Maldev && ./Maldev`
+
+>[!warning]
+>Il est conseillé de faire une copie de `safeBinary` avant d'exécuter
+
+Une fois Maldev executé vous pouvez lancer `safeBinary`
+
 
 ---
 
